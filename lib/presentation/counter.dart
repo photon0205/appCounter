@@ -33,52 +33,89 @@ class CounterPage extends StatelessWidget {
     counter = localStorageService.getCounter();
     return BlocProvider(
       create: (_) => CounterBloc(counter),
-      child: (BlocBuilder<CounterBloc, CounterState>(
-        builder: (context, state) {
-          localStorageService.setCounter(state.counter);
-          return Center(
-              child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              FloatingActionButton(
+      child: (BlocConsumer<CounterBloc, CounterState>(
+        listener: (context, state) {
+          if (state.wasIncremented == true) {
+            // ignore: deprecated_member_use
+            Scaffold.of(context).showSnackBar(
+              SnackBar(
+                  content: Text('Incremented to ${state.counter}'),
+                  duration: const Duration(milliseconds: 1000),
+                  elevation: 1000,
+                  action: SnackBarAction(
+                    label: 'Undo',
+                    onPressed: () {
+                      BlocProvider.of<CounterBloc>(context)
+                          .add(const Decrement());
+                    },
+                  )),
+            );
+          } else if (state.wasDecremented == true) {
+            // ignore: deprecated_member_use
+            Scaffold.of(context).showSnackBar(SnackBar(
+              content: Text('Decremented to ${state.counter}'),
+              duration: const Duration(milliseconds: 1000),
+              action: SnackBarAction(
+                label: 'Undo',
                 onPressed: () {
                   BlocProvider.of<CounterBloc>(context).add(const Increment());
                 },
-                child: const Icon(Icons.add),
               ),
-              const SizedBox(
-                height: 8,
-              ),
-              FutureBuilder<Binary?>(
-                  future: n.getBinary(number: state.counter),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      Binary? data = snapshot.data;
-                      if (data != null) {
-                        bin = data.converted;
-                        return Text(bin);
+            ));
+          }
+        },
+        builder: (context, state) {
+          localStorageService.setCounter(state.counter);
+          return Center(
+              child:
+                  Column(mainAxisAlignment: MainAxisAlignment.start, children: [
+            const Text("For Counter Number watch for the SnackBar"),
+            const SizedBox(
+              height: 350,
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                FloatingActionButton(
+                  onPressed: () {
+                    BlocProvider.of<CounterBloc>(context)
+                        .add(const Increment());
+                  },
+                  child: const Icon(Icons.add),
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                FutureBuilder<Binary?>(
+                    future: n.getBinary(number: state.counter),
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) {
+                        Binary? data = snapshot.data;
+                        if (data != null) {
+                          bin = data.converted;
+                          var t = state.counter;
+                          return Text("$t\n in Binary is: \n$bin",
+                              textAlign: TextAlign.center, textScaleFactor: 2);
+                        }
                       }
-                    }
-                    return const CircularProgressIndicator();
-                  }),
-              const SizedBox(
-                height: 8,
-              ),
-              Text(
-                state.counter.toString(),
-                style: Theme.of(context).textTheme.headline4,
-              ),
-              const SizedBox(
-                height: 8,
-              ),
-              FloatingActionButton(
-                onPressed: () {
-                  BlocProvider.of<CounterBloc>(context).add(const Decrement());
-                },
-                child: const Icon(Icons.remove),
-              ),
-            ],
-          ));
+                      return const CircularProgressIndicator();
+                    }),
+                const SizedBox(
+                  height: 8,
+                ),
+                const SizedBox(
+                  height: 8,
+                ),
+                FloatingActionButton(
+                  onPressed: () {
+                    BlocProvider.of<CounterBloc>(context)
+                        .add(const Decrement());
+                  },
+                  child: const Icon(Icons.remove),
+                ),
+              ],
+            )
+          ]));
         },
       )),
     );
